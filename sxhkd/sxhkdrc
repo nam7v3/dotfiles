@@ -1,0 +1,127 @@
+# Misc
+super + Return
+	kitty
+
+super + v
+    [[ $(pgrep vifm) ]] && killall vifm;\
+    alacritty --class vifm -e vifm;\
+    $HOME/.config/script/center-window.sh
+
+super + b
+	brave 2> /dev/null
+
+super + d
+	rofi -config $HOME/.config/rofi/drun.rasi -show drun
+
+# Reload sxhkd configuration files
+super + Escape
+	pkill -USR1 -x sxhkd
+
+# Hide bar
+super + o
+    polybar-msg cmd toggle
+
+super + w
+    rofi -config $HOME/.config/rofi/window.rasi -show window
+
+super + shift + Escape
+    $HOME/.config/script/system.sh
+
+
+#--------------------------------
+# BSPWM hotkeys
+#--------------------------------
+
+# quit/restart bspwm
+super + shift + {q,r}
+	bspc {quit,wm -r}
+
+# close/kill window
+super + {shift + c , shift + w}
+	bspc node {--close, --kill}
+
+# set window state
+super + {t,shift + t,s}
+	bspc node -t {tiled,pseudo_tiled,floating};\
+    polybar-msg cmd show
+
+super + f
+    bspc node -t fullscreen;\
+    polybar-msg cmd hide
+
+super + e
+    bspc desktop --focus next.!occupied
+
+super + u
+    bspc node -f next.local;\
+    bspc node -l above;\
+    bspc node -f
+
+super + {n, p}
+    bspc desktop --focus {next, prev}
+
+super + shift + {n, p}
+    bspc node --to-desktop {next, prev} --follow
+
+super + {_,shift +}{h,j,k,l}
+	bspc node --{focus,swap} {west,south,north,east}
+
+super + alt + {h,j,k,l}
+	bspc node -z {left -20 0,bottom 0 20,top 0 -20,right 20 0}
+
+# contract a window by moving one of its side inward
+super + alt + shift + {h,j,k,l}
+	bspc node -z {right -20 0,top 0 20,bottom 0 -20,left 20 0}
+
+super + {1-9}
+	bspc desktop --focus ^{1-9}
+
+super + Tab
+    bspc desktop last --focus
+
+super + shift + Tab
+    bspc desktop next.occupied --focus
+
+super + shift + {1-9}
+    bspc node --to-desktop ^{1-9} --follow
+
+super + shift + e
+    bspc node --to-desktop next.!occupied --follow
+
+super + m
+	bspc desktop --layout next
+
+#--------------------------------
+# Function key
+#--------------------------------
+
+XF86MonBrightnessUp
+	xbacklight -inc 2
+
+XF86MonBrightnessDown
+	xbacklight -dec 2
+
+XF86AudioRaiseVolume
+	amixer set Master 1%+
+
+XF86AudioLowerVolume
+	amixer set Master 1%-
+
+XF86AudioMute
+  amixer set Master toggle
+
+XF86AudioMicMute
+	amixer set Capture toggle
+
+control + shift + Print
+    scrot -z -e 'xclip -selection clipboard -t image/png -i $f'
+
+control + Print
+    scrot -z -s -e 'xclip -selection clipboard -t image/png -i $f'
+
+alt + Print
+	scrot -s "$HOME/Pictures/%T-%d-%m-%Y.png"
+
+alt + shift + Print
+	scrot  "$HOME/Pictures/%T-%d-%m-%Y.png"
+

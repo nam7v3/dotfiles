@@ -1,0 +1,22 @@
+{
+        "diagnostic.errorSign": "✖",
+        "diagnostic.hintSign": "",
+        "diagnostic.warningSign": "",
+        "diagnostic.infoSign": "🕮",
+
+        "diagnostic.checkCurrentLine": true,
+        "diagnostic.virtualText": true,
+        "diagnostic.virtualTextCurrentLineOnly": false,
+        "diagnostic.autoRefresh": true,
+        "diagnostic.virtualTextWinCol": null,
+        "diagnostic.virtualTextLineSeparator": " | ",
+        "diagnostic.virtualTextLines": 5,
+        "diagnostic.virtualTextPrefix": ">>",
+        "diagnostic.virtualTextLevel": "information",
+        "hover.target": "echo",
+
+        //rust-analyzer
+        "rust-analyzer.enable": true
+
+}
+

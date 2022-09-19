@@ -1,0 +1,54 @@
+#!/bin/sh
+
+#autostart
+export GTK_IM_MODULE=fcitx5
+export QT_IM_MODULE=fcitx5
+export XMODIFIERS=@im=fcitx5
+export GLFW_IM_MODULE=ibus
+
+[[ $(pgrep nitrogen) ]] && killall nitrogen
+[[ $(pgrep sxhkd) ]] && killall sxhkd
+[[ $(pgrep dunst) ]] && killall dunst
+[[ $(pgrep emacs) ]] && killall emacs
+nitrogen --restore &
+picom --experimental-backends &
+sxhkd &
+fcitx5 &
+dunst -conf $HOME/.config/dunst/dunstrc &
+$HOME/.config/polybar/bar3/autostart.sh &
+xsetroot -cursor_name left_ptr
+
+bspc monitor -d 1 2 3 4 5 6 7 8 9
+
+# Setting
+bspc config border_width         1
+bspc config window_gap           4
+
+bspc config split_ratio          0.5
+bspc config borderless_monocle   true
+bspc config gapless_monocle      true
+bspc config borderless_singleton false
+
+#Color
+bspc config focused_border_color \#ffffff
+bspc config normal_border_color  \#00
+
+# Mouse
+bspc config click_to_focus      any
+bspc config pointer-modifier    mod4
+bspc config pointer_action1     move
+bspc config pointer_action3     resize_corner
+bspc config focus_follows_pointer   true
+
+bspc rule -a Zathura state=tiled
+bspc rule -a Nemo state=floating
+bspc rule -a feh state=floating
+bspc rule -a Steam state=floating
+bspc rule -a Emacs state=fullscreen
+bspc rule -a 'Virtual Machine Manager' state=floating
+bspc rule -a discord desktop=^9 follow=on
+bspc rule -a Alacritty:vifm state=floating center=true focus=on rectangle=900x600+0+0
+bspc rule -a Alacritty:ncmpcpp state=floating center=true focus=on rectangle=900x600+0+0
+
+
+exec bspwm
