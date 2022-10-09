@@ -1,138 +1,130 @@
 local lspconfig = require('lspconfig')
-local lsp_installer = require('nvim-lsp-installer')
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-local keymap = vim.keymap
+local au = require('util.au')
 local api = vim.api
-local buf = vim.lsp.buf
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities  = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
-lsp_installer.setup {}
-
---- Configurations ---
-
-local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
-
-for type, icon in pairs(signs) do
-  local hl = "DiagnosticSign" .. type
-  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-end
-
-vim.diagnostic.config {
-  underline = false,
-  update_in_insert = true,
-  virtual_text = {
-    prefix = '●',
-  },
-  float = {
-    source = "always",
-  },
+local servers = {
+	'clangd',
+	'gopls',
+	'rust_analyzer',
+	'sumneko_lua',
 }
 
--- LSP servers defaul_config
-function on_attach(client, bufnr)
-  local opts = { buffer = bufnr, silent = true }
-  api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-  keymap.set('n', 'gD', function() buf.declaration() end, opts)
-  keymap.set('n', 'gd', function() buf.definition() end, opts)
-  keymap.set('n', 'K', function() buf.hover() end, opts)
-  keymap.set('n', 'gi', function() buf.implementation() end, opts)
-  keymap.set('n', '<C-k>', function() buf.signature_help() end, opts)
-  keymap.set('n', '<Space>wa', function() buf.add_workspace_folder() end, opts)
-  keymap.set('n', '<Space>wr', function() buf.remove_workspace_folder() end, opts)
-  keymap.set('n', '<Space>wl', function() print(vim.inspect(buf.list_workspace_folders())) end, opts)
-  keymap.set('n', '<Space>D', function() buf.type_definition() end, opts)
-  keymap.set('n', '<Space>rn', function() buf.rename() end, opts)
-  keymap.set('n', '<Space>ca', function() buf.code_action() end, opts)
-  keymap.set('n', 'gr', function() buf.references() end, opts)
-  keymap.set('n', '<Space>fm', function() buf.formatting() end, opts)
+require('lsp.cmp')
 
-  vim.api.nvim_create_autocmd("CursorHold", {
-    buffer = bufnr,
-    callback = function()
-      local opts = {
-        focusable = false,
-        close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
-        border = 'rounded',
-        source = 'always',
-        prefix = ' ',
-        scope = 'cursor',
-      }
-      vim.diagnostic.open_float(nil, opts)
-    end
-  })
+
+local on_attach = function(client, bufnr)
+  local bufopts = { noremap=true, silent=true, buffer=bufnr }
+  vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
+  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
+  vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
+  vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, bufopts)
+  vim.keymap.set('n', '<Leader>wa', vim.lsp.buf.add_workspace_folder, bufopts)
+  vim.keymap.set('n', '<Leader>wr', vim.lsp.buf.remove_workspace_folder, bufopts)
+  vim.keymap.set('n', '<Leader>wl', function()
+    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  end, bufopts)
+  vim.keymap.set('n', '<Leader>D', vim.lsp.buf.type_definition, bufopts)
+  vim.keymap.set('n', '<Leader>rn', vim.lsp.buf.rename, bufopts)
+  vim.keymap.set('n', '<Leader>ca', vim.lsp.buf.code_action, bufopts)
+  vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
+  vim.keymap.set('n', '<Leader>fr', function() vim.lsp.buf.format { async = true } end, bufopts)
+  vim.keymap.set('n', '<Leader>e', vim.diagnostic.open_float, bufopts)
+	vim.keymap.set('n', '<Leader>ca', function ()
+		vim.lsp.buf.code_action()
+	end)
 end
 
-lspconfig.util.default_config = vim.tbl_extend(
-  "force",
-  lspconfig.util.default_config,
-  {
-    on_attach = on_attach,
-    capabilities = capabilities,
-    flags = {
-      debounce_text_changes = 150,
-    },
-  }
+
+for _, server in ipairs(servers) do
+	lspconfig[server].setup{
+		on_attach = on_attach,
+		capabilities = capabilities,
+	}
+end
+
+vim.cmd[[sign define DiagnosticSignError text= texthl=DiagnosticSignError linehl= numhl=DiagnosticSignError ]]
+vim.cmd[[sign define DiagnosticSignWarn text= texthl=DiagnosticSignWarn linehl= numhl=DiagnosticSignWarn ]]
+vim.cmd[[sign define DiagnosticSignInfo text= texthl=DiagnosticSignInfo linehl= numhl=DiagnosticSignInfo ]]
+vim.cmd[[sign define DiagnosticSignHint text= texthl=DiagnosticSignHint linehl= numhl=DiagnosticSignHint ]]
+
+vim.diagnostic.config({
+	virtual_text = false,
+	update_in_insert = true,
+	severity_sort = true,
+
+	float = {
+		scope = 'buffer',
+		focus = false,
+		focusable = false,
+		border = 'single',
+		header = "",
+		prefix = function(diagnostic, i, total)
+			if diagnostic.severity == vim.diagnostic.severity.ERROR then
+				return "Error: ", "DiagnosticSignError"
+			elseif diagnostic.severity == vim.diagnostic.severity.WARN then
+				return "Warning: ", "DiagnosticSignWarn"
+			elseif diagnostic.severity == vim.diagnostic.severity.INFO then
+				return "Info: ", "DiagnosticSignInfo"
+			else
+				return "Hint: ", "DiagnosticSignHint"
+			end
+		end,
+		zindex = 50,
+	},
+})
+
+vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+ vim.lsp.handlers.hover, {
+	 	border = "single",
+		focus = false,
+		focusable = false,
+	 	zindex = 90,
+ }
 )
 
--- Servers specific configurations
+au.augroup('LSPHooks',
+{
+	{
+		event = {'CursorHold', 'CursorHoldI'},
+		callback = function ()
+			if not require('cmp').visible() then
+				vim.diagnostic.open_float({
+					scope = 'cursor',
+				})
+			end
+		end
+	}
+})
 
-require("rust-analyzer")
+local runtime_path = vim.split(package.path, ";")
+table.insert(runtime_path, "lua/?.lua")
+table.insert(runtime_path, "lua/?/init.lua")
 
-for _, lsp in ipairs(lsp_installer.get_installed_servers()) do
-  lspconfig[lsp.name].setup {}
-end
-
-
-local luasnip = require 'luasnip'
-local cmp = require 'cmp'
-
-cmp.setup {
-  snippet = {
-    expand = function(args)
-      luasnip.lsp_expand(args.body)
-    end,
-  },
-  mapping = cmp.mapping.preset.insert({
-    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<CR>'] = cmp.mapping.confirm {
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = true,
+lspconfig.sumneko_lua.setup({
+on_attach = on_attach,
+settings = {
+    Lua = {
+    runtime = {
+        -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+        version = "LuaJIT",
+        -- Setup your lua path
+        path = runtime_path,
     },
-    ['<C-n>'] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_next_item()
-      elseif luasnip.expand_or_jumpable() then
-        luasnip.expand_or_jump()
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-    ['<C-p>'] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-  }),
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
-    { name = 'orgmode' },
-  },
-}
-
-require 'nvim-treesitter.configs'.setup {
-  highlight = {
-    enable = true,
-    additional_vim_regex_highlighting = false,
-        rainbow = {
-          enable = true,
-          extended_mode = true,
-        }
-  },
-}
+    diagnostics = {
+        -- Get the language server to recognize the `vim` global
+        globals = { "vim" },
+    },
+    workspace = {
+        -- Make the server aware of Neovim runtime files
+        library = api.nvim_get_runtime_file("", true),
+    },
+    -- Do not send telemetry data containing a randomized but unique identifier
+    telemetry = {
+        enable = false,
+    },
+    },
+},
+})
