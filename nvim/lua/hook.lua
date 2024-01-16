@@ -1,24 +1,15 @@
-local au = require("util.au")
-local keymap = vim.keymap
-local opt = vim.opt
-local highlight = vim.highlight
+vim.api.nvim_create_autocmd('TextYankPost', {
+	callback = function() vim.highlight.on_yank() end,
+	desc = 'Briefly highlight yanked text',
+})
 
-au.augroup("BufInitSettings" ,{
-{
-	event = "BufEnter",
-	group = "BufInitSettings",
-	pattern = "*",
-	callback = function() 
-		opt.formatoptions:remove("o")
-		opt.formatoptions:remove("c")
-		opt.formatoptions:remove("r")
-	end
-},
-{
-	event = "TextYankPost",
-	pattern = "*",
-	callback = function()
-		highlight.on_yank {higroup="IncSearch", timeout=150}
-	end
-}})
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*.nim',
+  callback = function() vim.cmd[[retab]] end,
+	desc = 'Convert tab to spaces',
+})
 
+vim.api.nvim_create_autocmd({"BufWritePre"}, {
+    pattern = "*",
+    command = [[%s/\s\+$//e]],
+})
