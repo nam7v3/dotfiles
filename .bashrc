@@ -57,7 +57,7 @@ fi
 ## Jobs
 PS1=$PS1'$([ \j -gt 0 ] && echo [\j])'
 if [[ -n $(command -v __git_ps1) ]]; then
-  PS1=$PS1'\[\033[1;36m$(__git_ps1 "[%s]")\033[0m\]'
+  PS1=$PS1'\[\033[01;36m\]$(__git_ps1 "[%s]")\[\033[0m\]'
 fi
 
 PS1=$PS1'$ '
